@@ -1,0 +1,2 @@
+include ':sample', ':yakuhan'
+rootProject.name='yakuhan-android'
