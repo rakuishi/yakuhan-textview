@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="YakuhanTextView">
+        <attr name="android:text" />
+        <attr name="android:textSize" format="dimension" />
+        <attr name="android:textColor" format="reference|color" />
+        <attr name="android:textStyle" />
+        <attr name="android:maxLines" format="integer" min="0" />
+        <attr name="fontFamily" format="string" />
+        <attr name="kerningOnlyFirstChar" format="boolean" />
+    </declare-styleable>
+</resources>
