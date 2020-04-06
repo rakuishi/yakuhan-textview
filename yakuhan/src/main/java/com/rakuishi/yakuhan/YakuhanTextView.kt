@@ -166,7 +166,7 @@ class YakuhanTextView @JvmOverloads constructor(
         val lineHeight = getLineHeight()
         val adjustmentHeight = floor(lineHeight / 10f)
 
-        tokens.forEachIndexed { i, token ->
+        tokens.forEachIndexed { index, token ->
             val tokenWidth = textPaint.measureText(token)
 
             if (x + tokenWidth > maxWidth) {
@@ -176,15 +176,17 @@ class YakuhanTextView @JvmOverloads constructor(
                 y += (lineHeight + adjustmentHeight)
             }
 
-            token.forEachIndexed { j, c ->
-                val string = c.toString()
+            var offset = 0
+            val maxLength = token.codePointCount(0, token.length)
+            while (offset < maxLength) {
+                val string = codePointOffsetToString(token, offset)
                 val textWidth = textPaint.measureText(string)
                 val isLeftSpaceString = leftSpaceStrings.contains(string)
                 val isRightSpaceString = rightSpaceStrings.contains(string)
                 val kerningWidth =
                     if (isLeftSpaceString || isRightSpaceString) textWidth / 2f else 0f
                 val applyKerning =
-                    !kerningOnlyFirstChar || (kerningOnlyFirstChar && i == 0 && j == 0)
+                    !kerningOnlyFirstChar || (kerningOnlyFirstChar && index == 0 && offset == 0)
 
                 if (applyKerning && isLeftSpaceString) {
                     x -= kerningWidth
@@ -197,6 +199,7 @@ class YakuhanTextView @JvmOverloads constructor(
                 }
 
                 x += textWidth
+                offset++
             }
         }
 
@@ -206,31 +209,37 @@ class YakuhanTextView @JvmOverloads constructor(
     private fun parseTokens(text: String) {
         val tokens = arrayListOf<String>()
 
-        var index = 0
-        val maxLength = text.length
-        while (index < maxLength) {
-            if (isLetter(text[index])) {
+        var offset = 0
+        val maxLength = text.codePointCount(0, text.length)
+        while (offset < maxLength) {
+            if (isLetter(text[offset])) {
                 // Save Alphabet words
-                val startIndex = index
+                var token = ""
                 do {
-                    index++
-                } while (index < maxLength && isLetter(text[index]))
-                tokens.add(text.substring(startIndex, index))
-            } else if (index + 1 < maxLength && isSpaceString(text[index + 1])) {
+                    token += codePointOffsetToString(text, offset)
+                    offset++
+                } while (offset < maxLength && isLetter(text[offset]))
+                tokens.add(token)
+            } else if (offset + 1 < maxLength && isSpaceString(text[offset + 1])) {
                 // "「こんにちは。」" to "「", "こ", "ん", "に", "ち", "は。」"
-                val startIndex = index
+                var token = ""
                 do {
-                    index++
-                } while (index < maxLength && isSpaceString(text[index]))
-                tokens.add(text.substring(startIndex, index))
+                    token += codePointOffsetToString(text, offset)
+                    offset++
+                } while (offset < maxLength && isSpaceString(text[offset]))
+                tokens.add(token)
             } else {
-                tokens.add(text.substring(index, index + 1))
-                index++
-
+                tokens.add(codePointOffsetToString(text, offset))
+                offset++
             }
         }
 
         this.tokens = tokens
+    }
+
+    private fun codePointOffsetToString(text: String, codePointOffset: Int): String {
+        val codePoint = text.codePointAt(text.offsetByCodePoints(0, codePointOffset))
+        return String(Character.toChars(codePoint))
     }
 
     private fun isLetter(char: Char): Boolean {
